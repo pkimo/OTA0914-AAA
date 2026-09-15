@@ -1,0 +1,329 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>能量與公里計算器</title>
+
+  <style>
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      font-family: Arial, "Microsoft JhengHei", sans-serif;
+      background: linear-gradient(135deg, #667eea, #764ba2);
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      padding: 20px;
+    }
+
+    .container {
+      width: 100%;
+      max-width: 480px;
+      background: #fff;
+      border-radius: 24px;
+      padding: 30px;
+      box-shadow: 0 20px 50px rgba(0,0,0,0.2);
+    }
+
+    h1 {
+      text-align: center;
+      margin: 0 0 8px;
+      color: #333;
+      font-size: 28px;
+    }
+
+    .subtitle {
+      text-align: center;
+      color: #777;
+      margin-bottom: 28px;
+    }
+
+    label {
+      display: block;
+      font-weight: bold;
+      color: #444;
+      margin-bottom: 8px;
+    }
+
+    input {
+      width: 100%;
+      padding: 15px;
+      font-size: 20px;
+      border: 2px solid #ddd;
+      border-radius: 12px;
+      outline: none;
+      margin-bottom: 22px;
+    }
+
+    input:focus {
+      border-color: #667eea;
+    }
+
+    .options {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 8px;
+      margin-bottom: 25px;
+    }
+
+    .options button {
+      padding: 14px 5px;
+      border: 2px solid #ddd;
+      background: white;
+      border-radius: 12px;
+      font-size: 17px;
+      cursor: pointer;
+    }
+
+    .options button.active {
+      background: #667eea;
+      color: white;
+      border-color: #667eea;
+    }
+
+    .result {
+      background: #f5f7ff;
+      border-radius: 18px;
+      padding: 18px;
+    }
+
+    .result-item {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 13px 0;
+      border-bottom: 1px solid #ddd;
+    }
+
+    .result-item:last-child {
+      border-bottom: none;
+    }
+
+    .result-label {
+      color: #666;
+    }
+
+    .result-value {
+      font-size: 21px;
+      font-weight: bold;
+      color: #667eea;
+    }
+
+    .highlight {
+      background: linear-gradient(135deg, #667eea, #764ba2);
+      color: white;
+      border-radius: 18px;
+      padding: 20px;
+      margin-top: 18px;
+      text-align: center;
+    }
+
+    .highlight-title {
+      font-size: 16px;
+      opacity: 0.9;
+    }
+
+    .big {
+      font-size: 34px;
+      font-weight: bold;
+      margin: 5px 0;
+    }
+
+    .note {
+      margin-top: 18px;
+      text-align: center;
+      color: #888;
+      font-size: 13px;
+      line-height: 1.7;
+    }
+
+    @media (max-width: 400px) {
+      .container {
+        padding: 22px;
+      }
+
+      h1 {
+        font-size: 24px;
+      }
+
+      .options button {
+        font-size: 15px;
+      }
+    }
+  </style>
+</head>
+
+<body>
+
+<div class="container">
+
+  <h1>⚡ 能量計算器</h1>
+  <div class="subtitle">
+    計算到達 5000 能量還需要走多少公里
+  </div>
+
+  <label for="energy">目前能量</label>
+
+  <input
+    type="number"
+    id="energy"
+    placeholder="例如：3820"
+    min="0"
+    max="5000"
+    oninput="calculate()"
+  >
+
+  <label>選擇每次公里數</label>
+
+  <div class="options">
+    <button id="km1" onclick="selectKm(1)">1 km</button>
+    <button id="km3" onclick="selectKm(3)" class="active">3 km</button>
+    <button id="km5" onclick="selectKm(5)">5 km</button>
+    <button id="km20" onclick="selectKm(20)">20 km</button>
+  </div>
+
+  <div class="result">
+
+    <div class="result-item">
+      <span class="result-label">目標能量</span>
+      <span class="result-value">5000</span>
+    </div>
+
+    <div class="result-item">
+      <span class="result-label">目前能量</span>
+      <span class="result-value" id="currentEnergy">0</span>
+    </div>
+
+    <div class="result-item">
+      <span class="result-label">還差能量</span>
+      <span class="result-value" id="remaining">5000</span>
+    </div>
+
+    <div class="result-item">
+      <span class="result-label">每次獲得能量</span>
+      <span class="result-value">15</span>
+    </div>
+
+    <div class="result-item">
+      <span class="result-label">選擇公里數</span>
+      <span class="result-value" id="selectedKm">3 km</span>
+    </div>
+
+  </div>
+
+  <div class="highlight">
+    <div class="highlight-title">還需要</div>
+
+    <div class="big" id="totalKm">
+      0 km
+    </div>
+
+    <div id="times">
+      0 次
+    </div>
+  </div>
+
+  <div class="note">
+    每次固定獲得 15 點能量<br>
+    公里數只影響每次需要走的距離<br>
+    次數不足完整一次時會自動進位
+  </div>
+
+</div>
+
+
+<script>
+
+  const TARGET = 5000;
+
+  // 每一次固定增加 15 能量
+  const ENERGY_PER_TIME = 15;
+
+  // 預設選擇 3 公里
+  let selectedKm = 3;
+
+
+  function selectKm(km) {
+
+    selectedKm = km;
+
+    // 移除所有按鈕的選取狀態
+    document.querySelectorAll(".options button").forEach(button => {
+      button.classList.remove("active");
+    });
+
+    // 加上目前選擇
+    document.getElementById("km" + km).classList.add("active");
+
+    calculate();
+  }
+
+
+  function calculate() {
+
+    let current = Number(
+      document.getElementById("energy").value
+    );
+
+    // 防止負數
+    if (current < 0) {
+      current = 0;
+    }
+
+    // 最大不超過 5000
+    if (current > TARGET) {
+      current = TARGET;
+    }
+
+
+    // 還差多少能量
+    const remaining = TARGET - current;
+
+
+    // 需要幾次
+    // 每次固定 +15
+    // 使用 Math.ceil 確保一定能達到 5000
+    const times = Math.ceil(
+      remaining / ENERGY_PER_TIME
+    );
+
+
+    // 總公里數
+    const totalKm = times * selectedKm;
+
+
+    // 最後實際增加的能量
+    const earnedEnergy = times * ENERGY_PER_TIME;
+
+
+    // 更新畫面
+
+    document.getElementById("currentEnergy").textContent =
+      current.toLocaleString();
+
+    document.getElementById("remaining").textContent =
+      remaining.toLocaleString();
+
+    document.getElementById("selectedKm").textContent =
+      selectedKm + " km";
+
+    document.getElementById("totalKm").textContent =
+      totalKm.toLocaleString() + " km";
+
+    document.getElementById("times").textContent =
+      "共 " + times + " 次，可獲得 " + earnedEnergy + " 點";
+  }
+
+
+  // 初始計算
+  calculate();
+
+</script>
+
+</body>
+</html>
